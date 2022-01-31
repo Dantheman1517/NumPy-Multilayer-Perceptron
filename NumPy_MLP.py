@@ -1,8 +1,3 @@
-"""
-NumPy multilayer perceptron
-Inspired heavily from Michael Nielsen - http://neuralnetworksanddeeplearning.com/index.html
-"""
-
 import numpy as np 
 import matplotlib.pyplot as plt
 
