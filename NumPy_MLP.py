@@ -43,7 +43,7 @@ class MLP(object):
         # forward
         self.forward_prop(data[0])
         
-        # cummulating cost of a batch
+        # cummulating cost of a batch using mean squared error
         self.c0 = np.append(self.c0,np.sum((self.a[-1]-data[1])**2)/len(data[0]))
 
         # back
@@ -65,7 +65,7 @@ class MLP(object):
     def dreLu(self, x):
         return (x>0)
 
-    def train(self, training_data, training_labels, batchSize, epoch): 
+    def train(self, training_data, training_labels, batchSize, epoch, plot_loss): 
 
         startTime = timeit.default_timer() # timing
 
@@ -100,15 +100,21 @@ class MLP(object):
                 target = np.argmax(batch[1], axis=1)
                 correct += (predicted == target).sum()
                 #print(correct)
-                if batch_idx % 50 == 0:
+                if batch_idx % batch_size == 0:
                     print('Epoch : {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}\t Accuracy:{:.3f}%'.format(
-                        epoch, batch_idx*len(batch), len(training_data), 100.*batch_idx / len(batchedData), self.c0[0], float(correct*100) / float(batch_size*(batch_idx+1))))
-
+                        (t+1), batch_idx*batch_size, len(training_data), 100.*batch_idx / len(batchedData), self.c0[-1], float(correct*100) / float(batch_size*(batch_idx+1))))
 
         print('\n' + 'time training = ' + str(timeit.default_timer() - startTime) + ' (s)') # timing
-        plt.plot(np.linspace(0,len(self.c0), len(self.c0)), self.c0)
-        plt.draw()
-
+        
+        if (plot_loss):
+            plt.plot(np.linspace(0,len(self.c0), len(self.c0)), self.c0)
+            for i in range(1, epoch):
+                plt.axvline(x=i*len(training_data)/batch_size, color='g', linestyle=':', linewidth=1)
+            plt.text(1, .10, "green line -- epoch")
+            plt.title("Loss over training batches")
+            plt.xlabel("Training examples")
+            plt.ylabel("Loss")
+            plt.show()
 
     def test(self, testing_data, testing_labels):
 
@@ -124,7 +130,7 @@ class MLP(object):
         correct = (predicted == target).sum()
         #print(correct)
         print('({}/{})\t Loss:{:.3f}\t Accuracy:{:.3f}%'.format(correct, len(testing_data), self.c0[0], 100*(correct / len(testing_data))))
-        
+
 
     def saveNetwork(self, weightPath, biasesPath):
         with open(weightPath, 'wb') as file:
@@ -175,13 +181,13 @@ def vectorized_result(j):
 
 
 # structure parameters
-layers = [784,16,16,10]
+layers = [784,100,10]
 learning_rate = .001
-init_scale = .01
+init_scale = .1
 
 # training parameters
-batch_size = 7
-epochs = 2
+batch_size = 10
+epochs = 5
 
 # model initialization
 model = MLP(layers, learning_rate, init_scale)
@@ -198,7 +204,6 @@ testing_labels = [vectorized_result(i) for i in test.dataset.targets.numpy()]
 
 
 # training
-model.train(training_data, training_labels, batch_size, epochs)
+model.train(training_data, training_labels, batch_size, epochs, plot_loss=True)
 # test
 model.test(testing_data, testing_labels)
-
